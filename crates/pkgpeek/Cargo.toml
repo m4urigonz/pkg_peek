@@ -1,0 +1,22 @@
+[package]
+name = "pkgpeek"
+description = "PKG Peek viewer window and command-line tools"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "pkgpeek"
+path = "src/main.rs"
+
+[[bin]]
+name = "pkgpeek-cli"
+path = "src/cli.rs"
+
+[dependencies]
+pkg-core.workspace = true
+pkg-render.workspace = true
+windows.workspace = true
+windows-core.workspace = true
+windows-numerics.workspace = true

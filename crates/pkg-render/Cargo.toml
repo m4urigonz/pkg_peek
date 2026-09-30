@@ -1,0 +1,13 @@
+[package]
+name = "pkg-render"
+description = "Thumbnail and preview-card rendering for PS4 PKG files (WIC + Direct2D + DirectWrite)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+pkg-core.workspace = true
+windows.workspace = true
+windows-core.workspace = true
+windows-numerics.workspace = true
