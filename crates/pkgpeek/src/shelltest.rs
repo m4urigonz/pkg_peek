@@ -68,7 +68,10 @@ pub fn run(r: &Renderer, dll: &str, pkg: &str, out: &Path) -> Result<()> {
         println!("icon location: {location} index={index} flags={flags:#x}");
         let (mut large, mut small) = (HICON::default(), HICON::default());
         let location_w = HSTRING::from(location.as_str());
-        match icon.Extract(&location_w, index as u32, Some(&mut large), Some(&mut small), (16 << 16) | 48) {
+        // Without GIL_NOTFILENAME (0x8) Explorer extracts from the location itself.
+        if flags & 0x8 == 0 {
+            println!("icon extract: skipped, the shell reads icon {index} of {location}");
+        } else { match icon.Extract(&location_w, index as u32, Some(&mut large), Some(&mut small), (16 << 16) | 48) {
             Ok(()) => {
                 r.save_hicon_png(large, &save("shell_icon48.png"))?;
                 r.save_hicon_png(small, &save("shell_icon16.png"))?;
@@ -77,7 +80,7 @@ pub fn run(r: &Renderer, dll: &str, pkg: &str, out: &Path) -> Result<()> {
                 println!("icon extract: ok ({:?})", t.elapsed());
             }
             Err(e) => println!("icon extract: {} ({:?})", e.code(), t.elapsed()),
-        }
+        } }
 
         // Property handler.
         let t = Instant::now();

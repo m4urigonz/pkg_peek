@@ -10,6 +10,10 @@
 //!
 //! Every entry point catches panics: this DLL runs inside explorer.exe.
 
+// LNK4104 ("export of DllGetClassObject should be PRIVATE") is harmless: it
+// only concerns the import library, which nobody links against.
+#![allow(linker_messages)]
+
 mod guids;
 mod icon;
 mod preview;
