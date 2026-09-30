@@ -1,0 +1,21 @@
+[workspace]
+resolver = "3"
+members = ["crates/pkg-core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["Mauricio"]
+
+[workspace.dependencies]
+pkg-core = { path = "crates/pkg-core" }
+
+[profile.release]
+# Shell extensions run inside explorer.exe: a panic must unwind so the COM
+# boundary can catch it and return E_FAIL instead of killing the host.
+panic = "unwind"
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
