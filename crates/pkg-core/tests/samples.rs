@@ -1,5 +1,5 @@
 //! Parses every PKG in `$PKGPEEK_SAMPLES` (skipped when unset):
-//! `PKGPEEK_SAMPLES=D:\Descargas cargo test -p pkg-core --test samples -- --nocapture`
+//! `PKGPEEK_SAMPLES=C:\path\to\pkgs cargo test -p pkg-core --test samples -- --nocapture`
 
 use std::fs::File;
 use std::io::{BufReader, Read};

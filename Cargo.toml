@@ -6,7 +6,9 @@ members = ["crates/pkg-core", "crates/pkg-render", "crates/pkgpeek", "crates/pkg
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
-authors = ["Mauricio"]
+authors = ["Mauricio (m4urigonz)"]
+repository = "https://github.com/m4urigonz/pkg_peek"
+homepage = "https://github.com/m4urigonz/pkg_peek"
 
 [workspace.dependencies]
 pkg-core = { path = "crates/pkg-core" }

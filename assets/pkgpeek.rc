@@ -1,12 +1,20 @@
 #include <winver.h>
 
+// Version macros come from build.rs (CARGO_PKG_VERSION).
+#ifndef PKGPEEK_VERSION_STR
+#define PKGPEEK_VERSION_MAJOR 0
+#define PKGPEEK_VERSION_MINOR 0
+#define PKGPEEK_VERSION_PATCH 0
+#define PKGPEEK_VERSION_STR "0.0.0"
+#endif
+
 // Icon 1: generic PKG glyph. The shell uses it for .pkg files that are not
 // PS4 packages, and the viewer uses it as its window icon.
 1 ICON "pkg.ico"
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 0,1,0,0
-PRODUCTVERSION 0,1,0,0
+FILEVERSION PKGPEEK_VERSION_MAJOR,PKGPEEK_VERSION_MINOR,PKGPEEK_VERSION_PATCH,0
+PRODUCTVERSION PKGPEEK_VERSION_MAJOR,PKGPEEK_VERSION_MINOR,PKGPEEK_VERSION_PATCH,0
 FILEOS VOS_NT_WINDOWS32
 BEGIN
     BLOCK "StringFileInfo"
@@ -15,9 +23,9 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "PKG Peek"
             VALUE "FileDescription", "PKG Peek: vista previa de PKG de PS4"
-            VALUE "FileVersion", "0.1.0"
+            VALUE "FileVersion", PKGPEEK_VERSION_STR
             VALUE "ProductName", "PKG Peek"
-            VALUE "ProductVersion", "0.1.0"
+            VALUE "ProductVersion", PKGPEEK_VERSION_STR
             VALUE "LegalCopyright", "MIT"
         END
     END

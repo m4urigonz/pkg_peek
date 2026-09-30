@@ -1,0 +1,49 @@
+name: Release
+
+# Push a tag like v0.2.0 (matching the version in Cargo.toml) to build the
+# installer and publish it as a GitHub release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Check tag matches Cargo.toml
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'.TrimStart('v')
+          $cargo = Get-Content Cargo.toml -Raw
+          if ($cargo -notmatch '(?ms)\[workspace\.package\].*?^version\s*=\s*"([^"]+)"') { throw 'No version in Cargo.toml' }
+          if ($Matches[1] -ne $tag) { throw "Tag v$tag does not match Cargo.toml version $($Matches[1])" }
+
+      - name: Test
+        run: cargo test --workspace
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: pwsh
+        run: ./scripts/build-installer.ps1
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: PKG Peek ${{ github.ref_name }}
+          files: dist/PkgPeek-Setup-*.exe
+          generate_release_notes: true
+          body: |
+            Extensión del Explorador de Windows para **PKG de PS4**: icono del juego en todas las vistas, vista previa en el panel del Explorador y en PowerToys Peek, y columnas con Title ID, versión y firmware.
+
+            **Instalación:** descarga `PkgPeek-Setup-*.exe` y ejecútalo. Si Windows muestra "Windows protegió su PC" (el instalador no está firmado), pulsa *Más información → Ejecutar de todas formas*.
+
+            Requiere Windows 10/11 de 64 bits.
