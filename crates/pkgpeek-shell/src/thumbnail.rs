@@ -19,7 +19,7 @@ use windows_core::{Interface, PCWSTR, Result, implement};
 
 use crate::{ModuleRef, already_initialized, guard, io_error, path_from};
 
-#[implement(IThumbnailProvider, IInitializeWithFile)]
+#[implement(IThumbnailProvider, IInitializeWithFile, Agile = false)]
 pub struct ThumbnailProvider {
     path: RefCell<Option<PathBuf>>,
     _module: ModuleRef,

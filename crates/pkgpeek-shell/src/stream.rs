@@ -2,9 +2,23 @@
 
 use std::io::{self, Read, Seek, SeekFrom};
 
-use windows::Win32::System::Com::{IStream, STREAM_SEEK_CUR, STREAM_SEEK_END, STREAM_SEEK_SET};
+use windows::Win32::System::Com::{
+    CoTaskMemFree, IStream, STATFLAG_DEFAULT, STATSTG, STREAM_SEEK_CUR, STREAM_SEEK_END, STREAM_SEEK_SET,
+};
 
 pub struct StreamReader(pub IStream);
+
+/// Name and size reported by the stream. Shell file streams report the full
+/// path, which lets a stream-initialized handler find sibling files.
+pub fn stat(stream: &IStream) -> (Option<String>, u64) {
+    let mut st = STATSTG::default();
+    if unsafe { stream.Stat(&mut st, STATFLAG_DEFAULT) }.is_err() {
+        return (None, 0);
+    }
+    let name = (!st.pwcsName.is_null()).then(|| unsafe { st.pwcsName.to_string().unwrap_or_default() });
+    unsafe { CoTaskMemFree(Some(st.pwcsName.0 as *const _)) };
+    (name.filter(|n| !n.is_empty()), st.cbSize)
+}
 
 impl Read for StreamReader {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {

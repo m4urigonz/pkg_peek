@@ -298,7 +298,11 @@ fn strip_markup(s: &str) -> String {
         .replace("&quot;", "\"")
         .replace("&apos;", "'")
         .replace("&amp;", "&");
-    out.lines().map(str::trim).filter(|l| !l.is_empty()).collect::<Vec<_>>().join("\n")
+    out.lines()
+        .map(|l| l.split_whitespace().collect::<Vec<_>>().join(" "))
+        .filter(|l| !l.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 #[cfg(test)]
@@ -334,8 +338,8 @@ mod tests {
     fn changeinfo_picks_matching_version() {
         let xml = r#"<?xml version="1.0"?><changeinfo>
             <changes app_ver="01.01">Old fix</changes>
-            <changes app_ver="01.02"><![CDATA[- New thing & more
-              - Another]]></changes></changeinfo>"#;
+            <changes app_ver="01.02"><![CDATA[- New thing &amp; more
+              -		Another]]></changes></changeinfo>"#;
         assert_eq!(changeinfo_text(xml, Some("01.02")).as_deref(), Some("- New thing & more\n- Another"));
         assert_eq!(changeinfo_text(xml, None).as_deref(), Some("Old fix"));
     }

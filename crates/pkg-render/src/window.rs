@@ -11,10 +11,10 @@ use std::path::PathBuf;
 use windows::Win32::Foundation::{
     COLORREF, D2DERR_RECREATE_TARGET, GetLastError, GlobalFree, HANDLE, HINSTANCE, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM,
 };
-use windows::Win32::Graphics::Direct2D::Common::{D2D_SIZE_U, D2D1_ALPHA_MODE_IGNORE, D2D1_PIXEL_FORMAT};
+use windows::Win32::Graphics::Direct2D::Common::{D2D1_ALPHA_MODE_IGNORE, D2D1_PIXEL_FORMAT};
 use windows::Win32::Graphics::Direct2D::*;
 use windows::Win32::Graphics::Dxgi::Common::DXGI_FORMAT_B8G8R8A8_UNORM;
-use windows::Win32::Graphics::Gdi::{BeginPaint, EndPaint, InvalidateRect, PAINTSTRUCT};
+use windows::Win32::Graphics::Gdi::{BeginPaint, EndPaint, HDC, InvalidateRect, PAINTSTRUCT};
 use windows::Win32::System::Com::{CLSCTX_INPROC_SERVER, CoCreateInstance, CoTaskMemFree};
 use windows::Win32::System::DataExchange::{CloseClipboard, EmptyClipboard, OpenClipboard, SetClipboardData};
 use windows::Win32::System::Memory::{GMEM_MOVEABLE, GlobalAlloc, GlobalLock, GlobalUnlock};
@@ -52,7 +52,11 @@ struct CardWindow {
     path: Option<PathBuf>,
     /// Top-level viewer: Esc closes, closing quits the message loop.
     standalone: bool,
-    rt: Option<ID2D1HwndRenderTarget>,
+    /// Draws into the WM_PAINT device context. A DC target rather than an
+    /// HWND target: an HWND target puts a DXGI swap chain on the window, and
+    /// in the preview pane that window is a child of Explorer's window (another
+    /// process), where the swap chain deadlocked Explorer's UI thread.
+    rt: Option<ID2D1DCRenderTarget>,
     cache: DeviceCache,
     hits: Vec<Hit>,
     ui: Interaction,
@@ -135,6 +139,7 @@ pub fn create_card_window(params: CardWindowParams, renderer: Renderer, model: C
 unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     unsafe {
         if msg == WM_NCCREATE {
+            crate::debug::log(format!("card window {hwnd:?}: WM_NCCREATE"));
             let cs = &*(lparam.0 as *const CREATESTRUCTW);
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, cs.lpCreateParams as isize);
             return DefWindowProcW(hwnd, msg, wparam, lparam);
@@ -144,6 +149,7 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: 
             return DefWindowProcW(hwnd, msg, wparam, lparam);
         }
         if msg == WM_NCDESTROY {
+            crate::debug::log(format!("card window {hwnd:?}: WM_NCDESTROY"));
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, 0);
             drop(Box::from_raw(ptr));
             return DefWindowProcW(hwnd, msg, wparam, lparam);
@@ -156,7 +162,11 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: 
         }
         match catch_unwind(AssertUnwindSafe(|| (*ptr).handle(hwnd, msg, wparam, lparam))) {
             Ok(Some(result)) => result,
-            _ => DefWindowProcW(hwnd, msg, wparam, lparam),
+            Ok(None) => DefWindowProcW(hwnd, msg, wparam, lparam),
+            Err(_) => {
+                crate::debug::log(format!("card window {hwnd:?}: panic handling message {msg:#x}"));
+                DefWindowProcW(hwnd, msg, wparam, lparam)
+            }
         }
     }
 }
@@ -183,8 +193,10 @@ impl CardWindow {
                 WM_ERASEBKGND => Some(LRESULT(1)),
                 WM_PAINT => {
                     let mut ps = PAINTSTRUCT::default();
-                    BeginPaint(hwnd, &mut ps);
-                    if self.render(hwnd).is_err() {
+                    let hdc = BeginPaint(hwnd, &mut ps);
+                    let result = self.render(hwnd, hdc);
+                    crate::debug::log(format!("card window {hwnd:?}: WM_PAINT -> {result:?}"));
+                    if result.is_err() {
                         self.rt = None;
                         self.cache.reset();
                     }
@@ -192,13 +204,6 @@ impl CardWindow {
                     Some(LRESULT(0))
                 }
                 WM_SIZE => {
-                    if let Some(rt) = &self.rt {
-                        let size = D2D_SIZE_U { width: loword(lparam.0) as u32, height: hiword(lparam.0) as u32 };
-                        if rt.Resize(&size).is_err() {
-                            self.rt = None;
-                            self.cache.reset();
-                        }
-                    }
                     let _ = InvalidateRect(Some(hwnd), None, false);
                     Some(LRESULT(0))
                 }
@@ -273,7 +278,7 @@ impl CardWindow {
         }
     }
 
-    fn render(&mut self, hwnd: HWND) -> Result<()> {
+    fn render(&mut self, hwnd: HWND, hdc: HDC) -> Result<()> {
         unsafe {
             let mut rc = RECT::default();
             GetClientRect(hwnd, &mut rc)?;
@@ -284,7 +289,12 @@ impl CardWindow {
             let dpi = dpi_of(hwnd);
             if self.rt.is_none() {
                 let props = D2D1_RENDER_TARGET_PROPERTIES {
-                    r#type: D2D1_RENDER_TARGET_TYPE_DEFAULT,
+                    // Software inside the preview host: no Direct3D device at all.
+                    r#type: if self.standalone {
+                        D2D1_RENDER_TARGET_TYPE_DEFAULT
+                    } else {
+                        D2D1_RENDER_TARGET_TYPE_SOFTWARE
+                    },
                     pixelFormat: D2D1_PIXEL_FORMAT {
                         format: DXGI_FORMAT_B8G8R8A8_UNORM,
                         alphaMode: D2D1_ALPHA_MODE_IGNORE,
@@ -294,15 +304,11 @@ impl CardWindow {
                     usage: D2D1_RENDER_TARGET_USAGE_NONE,
                     minLevel: D2D1_FEATURE_LEVEL_DEFAULT,
                 };
-                let hwnd_props = D2D1_HWND_RENDER_TARGET_PROPERTIES {
-                    hwnd,
-                    pixelSize: D2D_SIZE_U { width: pw, height: ph },
-                    presentOptions: D2D1_PRESENT_OPTIONS_NONE,
-                };
-                self.rt = Some(self.renderer.d2d_factory().CreateHwndRenderTarget(&props, &hwnd_props)?);
+                self.rt = Some(self.renderer.d2d_factory().CreateDCRenderTarget(&props)?);
                 self.cache.reset();
             }
             let Some(rt) = self.rt.clone() else { return Ok(()) };
+            rt.BindDC(hdc, &rc)?;
             rt.SetDpi(dpi, dpi);
             let scale = 96.0 / dpi;
             rt.BeginDraw();

@@ -23,7 +23,7 @@ use crate::{ModuleRef, dll_path, guard, guids, path_from};
 /// "Extract later, on a background thread" (declared in Urlmon, not worth the feature).
 const E_PENDING: HRESULT = HRESULT(0x8000_000A_u32 as i32);
 
-#[implement(IExtractIconW, IPersistFile)]
+#[implement(IExtractIconW, IPersistFile, Agile = false)]
 pub struct IconHandler {
     path: RefCell<Option<PathBuf>>,
     _module: ModuleRef,

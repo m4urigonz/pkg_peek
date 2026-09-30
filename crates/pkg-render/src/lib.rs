@@ -4,6 +4,7 @@
 //! DirectWrite factories. COM must be initialized on the calling thread.
 
 mod card;
+pub mod debug;
 mod draw;
 mod locale;
 mod thumb;

@@ -37,7 +37,7 @@ fn key(pid: u32) -> PROPERTYKEY {
     PROPERTYKEY { fmtid: guids::FMTID_PKGPEEK, pid }
 }
 
-#[implement(IPropertyStore, IPropertyStoreCapabilities, IInitializeWithStream)]
+#[implement(IPropertyStore, IPropertyStoreCapabilities, IInitializeWithStream, Agile = false)]
 pub struct PropertyHandler {
     values: RefCell<Option<Vec<(PROPERTYKEY, PROPVARIANT)>>>,
     _module: ModuleRef,

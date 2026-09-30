@@ -199,7 +199,12 @@ pub fn register(dll: &Path) -> Result<()> {
 
     let schema = dir.join(SCHEMA_FILE);
     if schema.exists() {
-        unsafe { PSRegisterPropertySchema(&HSTRING::from(schema.as_os_str()))? };
+        let schema = HSTRING::from(schema.as_os_str());
+        unsafe {
+            // Unregister first so an updated file is re-read.
+            let _ = PSUnregisterPropertySchema(&schema);
+            PSRegisterPropertySchema(&schema)?;
+        }
     }
 
     notify();

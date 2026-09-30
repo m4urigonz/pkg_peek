@@ -26,6 +26,14 @@ fn main() -> ExitCode {
         Some("thumb") => thumb(&args[1..]),
         Some("card") => card(&args[1..]),
         Some("ico") => ico(&args[1..]),
+        Some("capture") => match &args[1..] {
+            [hwnd, out] => renderer().and_then(|r| Ok(shelltest::capture_hwnd(&r, hwnd.parse()?, out)?)),
+            _ => Err("uso: capture <hwnd> <out.png>".into()),
+        },
+        Some("shellcheck") => match &args[1..] {
+            [pkg, out] => renderer().and_then(|r| Ok(shelltest::check(&r, pkg, Path::new(out))?)),
+            _ => Err("uso: shellcheck <pkg> <outdir>".into()),
+        },
         Some("shelltest") => match &args[1..] {
             [dll, pkg, out] => renderer().and_then(|r| Ok(shelltest::run(&r, dll, pkg, Path::new(out))?)),
             _ => Err("uso: shelltest <dll> <pkg> <outdir>".into()),

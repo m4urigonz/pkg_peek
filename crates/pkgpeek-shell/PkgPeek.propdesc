@@ -61,7 +61,7 @@
       <labelInfo label="Fecha del PKG" invitationText="Fecha de creación del PKG"/>
       <typeInfo type="DateTime" isInnate="true" isViewable="true" isQueryable="true" canGroupBy="true"/>
       <displayInfo displayType="DateTime" defaultColumnWidth="12">
-        <dateTimeFormat formatAs="DateOnly"/>
+        <dateTimeFormat formatAs="General" formatTimeAs="HideTime" formatDateAs="ShortDate"/>
       </displayInfo>
     </propertyDescription>
 

@@ -9,6 +9,8 @@
 //! | Property handler   | Title ID, version... in columns, tooltips, search |
 //!
 //! Every entry point catches panics: this DLL runs inside explorer.exe.
+//! Handlers are declared `Agile = false` so COM keeps them in their STA
+//! (their state uses `RefCell`, and the preview handler owns a window).
 
 // LNK4104 ("export of DllGetClassObject should be PRIVATE") is harmless: it
 // only concerns the import library, which nobody links against.

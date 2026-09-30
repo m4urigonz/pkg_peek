@@ -102,9 +102,11 @@ pub fn run(r: &Renderer, dll: &str, pkg: &str, out: &Path) -> Result<()> {
             WINDOW_EX_STYLE::default(),
             w!("STATIC"),
             w!("shelltest"),
+            // Off-screen so the test does not flash on the desktop;
+            // PrintWindow still captures it.
             WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            40,
-            40,
+            -32000,
+            -32000,
             440,
             760,
             None,
@@ -113,7 +115,13 @@ pub fn run(r: &Renderer, dll: &str, pkg: &str, out: &Path) -> Result<()> {
             None,
         )?;
         let preview: IPreviewHandler = create(CLSID_PREVIEW)?.cast()?;
-        preview.cast::<IInitializeWithFile>()?.Initialize(&path, STGM_READ.0)?;
+        // Like Explorer's low-integrity prevhost: a stream, not a path.
+        let preview_stream = SHCreateStreamOnFileEx(&path, STGM_READ.0, 0, false, None)?;
+        let mut st = windows::Win32::System::Com::STATSTG::default();
+        preview_stream.Stat(&mut st, windows::Win32::System::Com::STATFLAG_DEFAULT)?;
+        println!("stream Stat name: {:?}", st.pwcsName.to_string());
+        windows::Win32::System::Com::CoTaskMemFree(Some(st.pwcsName.0 as *const c_void));
+        preview.cast::<IInitializeWithStream>()?.Initialize(&preview_stream, STGM_READ.0)?;
         let mut rc = RECT::default();
         GetClientRect(parent, &mut rc)?;
         preview.SetWindow(parent, &rc)?;
@@ -149,6 +157,15 @@ fn pump(duration: Duration) {
     }
 }
 
+/// `pkgpeek-cli capture <hwnd> <out.png>`: grabs any window (e.g. the card
+/// hosted by prevhost inside Explorer's preview pane).
+pub fn capture_hwnd(r: &Renderer, hwnd: isize, out: &str) -> Result<()> {
+    let hwnd = HWND(hwnd as *mut c_void);
+    let mut rc = RECT::default();
+    unsafe { GetClientRect(hwnd, &mut rc)? };
+    capture(r, hwnd, rc.right, rc.bottom, out)
+}
+
 /// PrintWindow with PW_RENDERFULLCONTENT (captures Direct2D output).
 fn capture(r: &Renderer, hwnd: HWND, w: i32, h: i32, path: &str) -> Result<()> {
     unsafe {
@@ -179,5 +196,62 @@ fn capture(r: &Renderer, hwnd: HWND, w: i32, h: i32, path: &str) -> Result<()> {
         let _ = DeleteDC(dc);
         ReleaseDC(None, screen);
         result
+    }
+}
+
+/// `pkgpeek-cli shellcheck <pkg> <outdir>`: asks the Windows shell itself (so
+/// it goes through the registration) for the type name, icon, thumbnail and
+/// PKG Peek properties of a file.
+pub fn check(r: &Renderer, pkg: &str, out: &Path) -> Result<()> {
+    use windows::Win32::Foundation::{PROPERTYKEY, SIZE};
+    use windows::Win32::Storage::FileSystem::FILE_FLAGS_AND_ATTRIBUTES;
+    use windows::Win32::UI::Shell::PropertiesSystem::PSGetPropertyKeyFromName;
+    use windows::Win32::UI::Shell::{
+        IShellItem2, IShellItemImageFactory, SHCreateItemFromParsingName, SHFILEINFOW, SHGFI_ICON, SHGFI_SMALLICON,
+        SHGFI_TYPENAME, SHGetFileInfoW, SIIGBF_THUMBNAILONLY,
+    };
+    unsafe {
+        let path = HSTRING::from(pkg);
+        let save = |name: &str| out.join(name).to_string_lossy().into_owned();
+
+        let mut info = SHFILEINFOW::default();
+        SHGetFileInfoW(&path, FILE_FLAGS_AND_ATTRIBUTES(0), Some(&mut info), size_of::<SHFILEINFOW>() as u32, SHGFI_TYPENAME);
+        let type_name = String::from_utf16_lossy(&info.szTypeName[..info.szTypeName.iter().position(|&c| c == 0).unwrap_or(0)]);
+        println!("type name: {type_name}");
+
+        let mut info = SHFILEINFOW::default();
+        SHGetFileInfoW(&path, FILE_FLAGS_AND_ATTRIBUTES(0), Some(&mut info), size_of::<SHFILEINFOW>() as u32, SHGFI_ICON | SHGFI_SMALLICON);
+        if !info.hIcon.is_invalid() {
+            r.save_hicon_png(info.hIcon, &save("sys_icon_small.png"))?;
+            let _ = DestroyIcon(info.hIcon);
+            println!("small icon: saved");
+        }
+
+        let item: IShellItem2 = SHCreateItemFromParsingName(&path, None)?;
+        let factory: IShellItemImageFactory = item.cast()?;
+        match factory.GetImage(SIZE { cx: 256, cy: 256 }, SIIGBF_THUMBNAILONLY) {
+            Ok(hbmp) => {
+                r.save_hbitmap_png(hbmp, &save("sys_thumb.png"))?;
+                let _ = DeleteObject(hbmp.into());
+                println!("thumbnail: saved");
+            }
+            Err(e) => println!("thumbnail: {e}"),
+        }
+
+        for name in ["System.Title", "PkgPeek.TitleId", "PkgPeek.Category", "PkgPeek.AppVersion", "PkgPeek.Firmware", "PkgPeek.Region", "PkgPeek.CreationDate"] {
+            let mut key = PROPERTYKEY::default();
+            if let Err(e) = PSGetPropertyKeyFromName(&HSTRING::from(name), &mut key) {
+                println!("{name:>22}: schema not registered ({e})");
+                continue;
+            }
+            match item.GetString(&key) {
+                Ok(v) => {
+                    println!("{name:>22}: {}", v.to_string().unwrap_or_default());
+                    windows::Win32::System::Com::CoTaskMemFree(Some(v.0 as *const c_void));
+                }
+                Err(e) => println!("{name:>22}: {e}"),
+            }
+        }
+        Ok(())
     }
 }
