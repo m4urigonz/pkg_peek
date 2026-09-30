@@ -1,0 +1,20 @@
+[package]
+name = "pkgpeek-shell"
+description = "Windows shell extension for PS4 PKG files: thumbnails, icons, preview and properties"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+name = "pkgpeek_shell"
+crate-type = ["cdylib"]
+
+[dependencies]
+pkg-core.workspace = true
+pkg-render.workspace = true
+windows.workspace = true
+windows-core.workspace = true
+
+[build-dependencies]
+embed-resource.workspace = true

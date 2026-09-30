@@ -1,0 +1,28 @@
+#include <winver.h>
+
+// Icon 1: generic PKG glyph. The shell uses it for .pkg files that are not
+// PS4 packages, and the viewer uses it as its window icon.
+1 ICON "pkg.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION 0,1,0,0
+PRODUCTVERSION 0,1,0,0
+FILEOS VOS_NT_WINDOWS32
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "0C0A04B0"
+        BEGIN
+            VALUE "CompanyName", "PKG Peek"
+            VALUE "FileDescription", "PKG Peek: vista previa de PKG de PS4"
+            VALUE "FileVersion", "0.1.0"
+            VALUE "ProductName", "PKG Peek"
+            VALUE "ProductVersion", "0.1.0"
+            VALUE "LegalCopyright", "MIT"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0C0A, 1200
+    END
+END

@@ -8,6 +8,7 @@ mod draw;
 mod locale;
 mod thumb;
 mod wic;
+pub mod window;
 
 pub use card::{CardModel, DeviceCache, Hit, HitTarget, Interaction};
 pub use locale::{format_date, format_size, ui_languages};

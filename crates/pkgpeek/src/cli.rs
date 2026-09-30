@@ -5,7 +5,10 @@
 //! pkgpeek-cli thumb <pkg> <out.png> [--size N]
 //! pkgpeek-cli card  <pkg> <out.png> [--width W] [--height H] [--scale S]
 //! pkgpeek-cli ico   <out.ico>          (generic PKG icon used by the shell DLL)
+//! pkgpeek-cli shelltest <dll> <pkg> <outdir>   (drives the COM handlers directly)
 //! ```
+
+mod shelltest;
 
 use std::fs::File;
 use std::io::BufReader;
@@ -23,6 +26,10 @@ fn main() -> ExitCode {
         Some("thumb") => thumb(&args[1..]),
         Some("card") => card(&args[1..]),
         Some("ico") => ico(&args[1..]),
+        Some("shelltest") => match &args[1..] {
+            [dll, pkg, out] => renderer().and_then(|r| Ok(shelltest::run(&r, dll, pkg, Path::new(out))?)),
+            _ => Err("uso: shelltest <dll> <pkg> <outdir>".into()),
+        },
         _ => Err("uso: pkgpeek-cli info|thumb|card|ico ... (ver cli.rs)".into()),
     };
     match result {

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/pkg-core", "crates/pkg-render", "crates/pkgpeek"]
+members = ["crates/pkg-core", "crates/pkg-render", "crates/pkgpeek", "crates/pkgpeek-shell"]
 
 [workspace.package]
 version = "0.1.0"
@@ -12,6 +12,7 @@ authors = ["Mauricio"]
 pkg-core = { path = "crates/pkg-core" }
 pkg-render = { path = "crates/pkg-render" }
 windows-core = "0.62"
+embed-resource = "3"
 windows-numerics = "0.3"
 windows = { version = "0.62", features = [
     "Win32_Foundation",
@@ -19,6 +20,7 @@ windows = { version = "0.62", features = [
     "Win32_Graphics_Direct2D",
     "Win32_Graphics_Direct2D_Common",
     "Win32_Graphics_DirectWrite",
+    "Win32_Graphics_Dwm",
     "Win32_Graphics_Dxgi_Common",
     "Win32_Graphics_Gdi",
     "Win32_Graphics_Imaging",
@@ -37,6 +39,7 @@ windows = { version = "0.62", features = [
     "Win32_UI_Shell_Common",
     "Win32_UI_Shell_PropertiesSystem",
     "Win32_UI_WindowsAndMessaging",
+    "Win32_Security",
     "Win32_Storage_FileSystem",
     "Win32_System_Console",
 ] }

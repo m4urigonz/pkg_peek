@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Properties exposed by the PKG Peek property handler (props.rs).
+  formatID must match guids::FMTID_PKGPEEK and propID the pid module.
+  Registered by DllRegisterServer with PSRegisterPropertySchema.
+-->
+<schema xmlns="http://schemas.microsoft.com/windows/2006/propertydescription" schemaVersion="1.0">
+  <propertyDescriptionList publisher="PkgPeek" product="PkgPeek">
+
+    <propertyDescription name="PkgPeek.TitleId" formatID="{A484DECF-D000-405F-BFBC-EA0A60607467}" propID="2">
+      <searchInfo inInvertedIndex="true" isColumn="true" columnIndexType="OnDisk" maxSize="64"/>
+      <labelInfo label="Title ID" invitationText="Title ID del PKG"/>
+      <typeInfo type="String" isInnate="true" isViewable="true" isQueryable="true" canGroupBy="true" canStackBy="true"/>
+      <displayInfo defaultColumnWidth="12"/>
+    </propertyDescription>
+
+    <propertyDescription name="PkgPeek.ContentId" formatID="{A484DECF-D000-405F-BFBC-EA0A60607467}" propID="3">
+      <searchInfo inInvertedIndex="true" isColumn="true" columnIndexType="OnDisk" maxSize="128"/>
+      <labelInfo label="Content ID" invitationText="Content ID del PKG"/>
+      <typeInfo type="String" isInnate="true" isViewable="true" isQueryable="true"/>
+      <displayInfo defaultColumnWidth="34"/>
+    </propertyDescription>
+
+    <propertyDescription name="PkgPeek.Category" formatID="{A484DECF-D000-405F-BFBC-EA0A60607467}" propID="4">
+      <searchInfo inInvertedIndex="true" isColumn="true" columnIndexType="OnDisk" maxSize="64"/>
+      <labelInfo label="Tipo de PKG" invitationText="Juego, actualización, DLC..."/>
+      <typeInfo type="String" isInnate="true" isViewable="true" isQueryable="true" canGroupBy="true" canStackBy="true"/>
+      <displayInfo defaultColumnWidth="14"/>
+    </propertyDescription>
+
+    <propertyDescription name="PkgPeek.AppVersion" formatID="{A484DECF-D000-405F-BFBC-EA0A60607467}" propID="5">
+      <searchInfo inInvertedIndex="true" isColumn="true" columnIndexType="OnDisk" maxSize="32"/>
+      <labelInfo label="Versión app" invitationText="Versión de la aplicación (APP_VER)"/>
+      <typeInfo type="String" isInnate="true" isViewable="true" isQueryable="true" canGroupBy="true"/>
+      <displayInfo defaultColumnWidth="10"/>
+    </propertyDescription>
+
+    <propertyDescription name="PkgPeek.MasterVersion" formatID="{A484DECF-D000-405F-BFBC-EA0A60607467}" propID="6">
+      <searchInfo inInvertedIndex="false" isColumn="true" columnIndexType="OnDisk" maxSize="32"/>
+      <labelInfo label="Versión maestra" invitationText="Versión maestra (VERSION)"/>
+      <typeInfo type="String" isInnate="true" isViewable="true" isQueryable="true"/>
+      <displayInfo defaultColumnWidth="10"/>
+    </propertyDescription>
+
+    <propertyDescription name="PkgPeek.Firmware" formatID="{A484DECF-D000-405F-BFBC-EA0A60607467}" propID="7">
+      <searchInfo inInvertedIndex="false" isColumn="true" columnIndexType="OnDisk" maxSize="32"/>
+      <labelInfo label="Firmware requerido" invitationText="Firmware mínimo de PS4"/>
+      <typeInfo type="String" isInnate="true" isViewable="true" isQueryable="true" canGroupBy="true" canStackBy="true"/>
+      <displayInfo defaultColumnWidth="10"/>
+    </propertyDescription>
+
+    <propertyDescription name="PkgPeek.Region" formatID="{A484DECF-D000-405F-BFBC-EA0A60607467}" propID="8">
+      <searchInfo inInvertedIndex="true" isColumn="true" columnIndexType="OnDisk" maxSize="32"/>
+      <labelInfo label="Región" invitationText="Región del PKG"/>
+      <typeInfo type="String" isInnate="true" isViewable="true" isQueryable="true" canGroupBy="true" canStackBy="true"/>
+      <displayInfo defaultColumnWidth="10"/>
+    </propertyDescription>
+
+    <propertyDescription name="PkgPeek.CreationDate" formatID="{A484DECF-D000-405F-BFBC-EA0A60607467}" propID="9">
+      <searchInfo inInvertedIndex="false" isColumn="true" columnIndexType="OnDisk"/>
+      <labelInfo label="Fecha del PKG" invitationText="Fecha de creación del PKG"/>
+      <typeInfo type="DateTime" isInnate="true" isViewable="true" isQueryable="true" canGroupBy="true"/>
+      <displayInfo displayType="DateTime" defaultColumnWidth="12">
+        <dateTimeFormat formatAs="DateOnly"/>
+      </displayInfo>
+    </propertyDescription>
+
+  </propertyDescriptionList>
+</schema>

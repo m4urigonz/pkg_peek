@@ -17,6 +17,9 @@ path = "src/cli.rs"
 [dependencies]
 pkg-core.workspace = true
 pkg-render.workspace = true
-windows.workspace = true
+windows = { workspace = true, features = ["Win32_Storage_Xps"] }
 windows-core.workspace = true
 windows-numerics.workspace = true
+
+[build-dependencies]
+embed-resource.workspace = true

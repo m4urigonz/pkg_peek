@@ -147,3 +147,18 @@ impl Renderer {
         }
     }
 }
+
+/// Debug helpers used by `pkgpeek-cli shelltest` to inspect handler output.
+impl Renderer {
+    pub fn save_hbitmap_png(&self, hbmp: HBITMAP, path: &str) -> Result<()> {
+        let bmp = unsafe {
+            self.wic.CreateBitmapFromHBITMAP(hbmp, windows::Win32::Graphics::Gdi::HPALETTE::default(), WICBitmapUseAlpha)?
+        };
+        self.save_png(&bmp.cast()?, path)
+    }
+
+    pub fn save_hicon_png(&self, icon: HICON, path: &str) -> Result<()> {
+        let bmp = unsafe { self.wic.CreateBitmapFromHICON(icon)? };
+        self.save_png(&bmp.cast()?, path)
+    }
+}
